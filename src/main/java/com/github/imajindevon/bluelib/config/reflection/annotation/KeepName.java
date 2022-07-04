@@ -14,8 +14,8 @@ import java.lang.annotation.Target;
  * Tells the injector and writer to use the exact name of this field.
  *
  * @see ReflectiveConfig#getNamingConventionConverter()
- * @see ReflectiveConfigWriter#copyFields(Object, ConfigurationSection)
- * @see ReflectiveConfigInjector#getAndInject(Object, ConfigurationSection, boolean, boolean)
+ * @see ReflectiveConfigWriter#copyFields(ReflectiveConfig, ConfigurationSection)
+ * @see ReflectiveConfigInjector#getAndInject(ReflectiveConfig, ConfigurationSection, boolean, boolean)
  * @since 1.0.0
  */
 @Target(ElementType.FIELD)

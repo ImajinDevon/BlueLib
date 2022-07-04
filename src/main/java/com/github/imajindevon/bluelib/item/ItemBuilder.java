@@ -49,13 +49,23 @@ public class ItemBuilder {
         builder.addEnchantments(item.getEnchantments())
                .setAmount(item.getAmount());
 
-        if (item.getItemMeta() != null) {
-            ItemMeta meta = item.getItemMeta();
-
-            return builder.setDisplayName(meta.getDisplayName())
-                          .setLore(meta.getLore());
+        if (item.getItemMeta() == null) {
+            return builder;
         }
-        return builder;
+
+        ItemMeta meta = item.getItemMeta();
+        return builder.setDisplayName(meta.getDisplayName())
+                      .setLore(meta.getLore());
+    }
+
+    /**
+     * Return a new ItemBuilder with the given item's {@link Material}.
+     * @param item the item
+     * @return the new item builder
+     */
+    @Contract("_ -> new")
+    public static ItemBuilder useMaterial(@NotNull ItemStack item) {
+        return new ItemBuilder(item.getType());
     }
 
     /**
@@ -113,7 +123,7 @@ public class ItemBuilder {
 
     /**
      * Tag this item by adding byte with a value of 1.
-     * This same effect can be achieved through the {@link PdcUtil#tryTagItem} method.
+     * This same effect can be achieved through the {@link PdcUtil#tag} method.
      *
      * @param key the key of the persistent data
      * @return this
@@ -251,6 +261,16 @@ public class ItemBuilder {
 
         meta.setDisplayName(this.displayName);
 
+        if (this.lore != null) {
+            meta.setLore(this.lore);
+        }
+
+        if (this.pdcEntries != null) {
+            for (PdcEntry<?, ?> entry : this.pdcEntries) {
+                PersistentDataType<Object, Object> type = (PersistentDataType<Object, Object>) entry.getType();
+                meta.getPersistentDataContainer().set(entry.getKey(), type, entry.getValue());
+            }
+        }
         item.setItemMeta(meta);
         return item;
     }
@@ -258,9 +278,9 @@ public class ItemBuilder {
     /**
      * @return if this ItemBuilder's result will use {@link ItemMeta}
      */
-    @SuppressWarnings("MethodWithMoreThanThreeNegations")
     private boolean usesItemMeta() {
-        return this.displayName != null || this.lore != null || (this.pdcEntries != null && !this.pdcEntries.isEmpty());
+        return !(this.displayName == null || this.lore == null)
+                   || (this.pdcEntries != null && !this.pdcEntries.isEmpty());
     }
 
     /**

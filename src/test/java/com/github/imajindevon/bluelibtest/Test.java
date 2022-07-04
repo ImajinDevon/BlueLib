@@ -20,19 +20,13 @@ final class Test {
 
     @Data
     private static final class ExampleReflectiveConfig implements ReflectiveConfig {
-        private String prefix;
+        private String prefix = "&aTest: ";
 
         // Assure that Boolean will be converted to boolean
-        private boolean testPrimitive;
+        private boolean testPrimitive = true;
 
         @Optional
-        private String helloWorld;
-
-        private ExampleReflectiveConfig() {
-            this.prefix = "&aTest: ";
-            this.helloWorld = "&eHello, world!";
-            this.testPrimitive = true;
-        }
+        private String helloWorld = "&eHello, world!";
 
         private void reloadFrom(@NotNull ConfigurationSection section) {
             try {

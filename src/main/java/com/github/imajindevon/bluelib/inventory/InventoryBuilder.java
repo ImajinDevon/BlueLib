@@ -20,7 +20,7 @@ public class InventoryBuilder {
     private @NotNull String @Nullable [] pattern = null;
 
     @Nullable
-    private String title;
+    private final String title;
 
     /**
      * Create a new InventoryBuilder.
