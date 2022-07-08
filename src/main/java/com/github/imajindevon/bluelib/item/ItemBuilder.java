@@ -10,6 +10,7 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.util.Consumer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +18,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ItemBuilder {
+    private Set<Consumer<ItemMeta>> metaConsumers = null;
+
     private @Nullable String displayName = null;
     private @Nullable List<String> lore = null;
     private @Nullable Map<Enchantment, Integer> enchantments = null;
@@ -25,6 +28,7 @@ public class ItemBuilder {
     private Material material;
 
     private int amount = 1;
+    private @Nullable Integer customModelData = null;
 
     /**
      * Creates a new ItemBuilder with the given material.
@@ -54,12 +58,17 @@ public class ItemBuilder {
         }
 
         ItemMeta meta = item.getItemMeta();
+
+        if (meta.hasCustomModelData()) {
+            builder.setCustomModelData(meta.getCustomModelData());
+        }
         return builder.setDisplayName(meta.getDisplayName())
                       .setLore(meta.getLore());
     }
 
     /**
      * Return a new ItemBuilder with the given item's {@link Material}.
+     *
      * @param item the item
      * @return the new item builder
      */
@@ -148,6 +157,30 @@ public class ItemBuilder {
     @Contract("_ -> this")
     public ItemBuilder setTranslatedLore(@Nullable List<@Nullable @FutureColored String> lore) {
         this.lore = ChatUtil.translateAllNullable(lore);
+        return this;
+    }
+
+    /**
+     * Set the custom model data of this item.
+     * To explicitly remove the custom model data, use {@link #removeCustomModelData()}.
+     *
+     * @param customModelData the custom model data, or null to remove it
+     * @return this
+     */
+    @Contract("_ -> this")
+    public ItemBuilder setCustomModelData(@Nullable Integer customModelData) {
+        this.customModelData = customModelData;
+        return this;
+    }
+
+    /**
+     * Remove the custom model data from this item.
+     *
+     * @return this
+     */
+    @Contract("-> this")
+    public ItemBuilder removeCustomModelData() {
+        this.customModelData = null;
         return this;
     }
 
@@ -248,10 +281,6 @@ public class ItemBuilder {
         ItemStack item = new ItemStack(this.material, this.amount);
         ItemMeta meta = item.getItemMeta();
 
-        if (this.enchantments != null) {
-            item.addEnchantments(this.enchantments);
-        }
-
         if (meta == null) {
             if (this.usesItemMeta()) {
                 throw new UnsupportedOperationException("ItemStack's without an ItemMeta cannot have a display name");
@@ -259,16 +288,27 @@ public class ItemBuilder {
             return item;
         }
 
+        if (this.enchantments != null) {
+            item.addEnchantments(this.enchantments);
+        }
+
         meta.setDisplayName(this.displayName);
+        meta.setCustomModelData(this.customModelData);
 
         if (this.lore != null) {
             meta.setLore(this.lore);
         }
-
         if (this.pdcEntries != null) {
             for (PdcEntry<?, ?> entry : this.pdcEntries) {
                 PersistentDataType<Object, Object> type = (PersistentDataType<Object, Object>) entry.getType();
                 meta.getPersistentDataContainer().set(entry.getKey(), type, entry.getValue());
+            }
+        }
+
+        // ItemMeta finalization - allow hooks (meta consumers).
+        if (this.metaConsumers != null) {
+            for (Consumer<ItemMeta> metaConsumer : this.metaConsumers) {
+                metaConsumer.accept(meta);
             }
         }
         item.setItemMeta(meta);
@@ -278,8 +318,9 @@ public class ItemBuilder {
     /**
      * @return if this ItemBuilder's result will use {@link ItemMeta}
      */
+    @SuppressWarnings("MethodWithMoreThanThreeNegations")
     private boolean usesItemMeta() {
-        return !(this.displayName == null || this.lore == null)
+        return this.customModelData != null || !(this.displayName == null || this.lore == null)
                    || (this.pdcEntries != null && !this.pdcEntries.isEmpty());
     }
 
@@ -341,7 +382,6 @@ public class ItemBuilder {
 
     /**
      * Clear all properties of the item.
-     * This also clears the cached result.
      * The material will be retained.
      *
      * @return this
@@ -353,6 +393,7 @@ public class ItemBuilder {
         this.enchantments = null;
         this.pdcEntries = null;
         this.amount = 0;
+        this.customModelData = -1;
         return this;
     }
 
@@ -377,5 +418,18 @@ public class ItemBuilder {
     public ItemBuilder incrementAmount(int incrementBy) {
         this.amount += incrementBy;
         return this;
+    }
+
+    /**
+     * Add an {@link ItemMeta} consumer to this ItemBuilder.
+     * This consumer will be applied with the item's ItemMeta **before** it is applied to the item.
+     *
+     * @param metaConsumer the meta consumer
+     */
+    protected void addMetaConsumer(@NotNull Consumer<ItemMeta> metaConsumer) {
+        if (this.metaConsumers == null) {
+            this.metaConsumers = new HashSet<>(1);
+        }
+        this.metaConsumers.add(metaConsumer);
     }
 }

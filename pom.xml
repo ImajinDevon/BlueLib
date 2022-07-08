@@ -118,5 +118,11 @@
             <version>2.29.0</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.mojang</groupId>
+            <artifactId>authlib</artifactId>
+            <version>1.5.25</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 </project>

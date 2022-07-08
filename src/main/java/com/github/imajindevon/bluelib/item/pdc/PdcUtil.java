@@ -35,6 +35,18 @@ public final class PdcUtil {
     }
 
     /**
+     * Apply a string to the given {@link PersistentDataHolder}.
+     *
+     * @param holder the holder
+     * @param key    the key of the entry
+     * @param string the string
+     */
+    public static void applyString(@NotNull PersistentDataHolder holder, @NotNull NamespacedKey key,
+                                   @NotNull String string) {
+        holder.getPersistentDataContainer().set(key, PersistentDataType.STRING, string);
+    }
+
+    /**
      * Get a string from the {@link PersistentDataHolder}.
      *
      * @param holder the holder, or null

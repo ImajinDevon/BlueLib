@@ -13,6 +13,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @deprecated this class is not finished
+ */
+@Deprecated(forRemoval = false, since = "0.1.1")
 public class InventoryBuilder {
     private final List<ItemStack> contents;
     private Map<Character, ItemStack> keyMap;

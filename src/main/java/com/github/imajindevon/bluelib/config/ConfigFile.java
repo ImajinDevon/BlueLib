@@ -44,7 +44,7 @@ public class ConfigFile {
      */
     @Contract("_, _ -> new")
     public static ConfigFile dumbLoad(@NotNull Plugin plugin, @NotNull String filePath) {
-        return dumbLoad(plugin, filePath, true);
+        return dumbLoad(plugin, filePath, Throwable::printStackTrace);
     }
 
     /**
@@ -53,23 +53,22 @@ public class ConfigFile {
      * If the file does not exist, {@link Plugin#saveResource} will be called to create it.
      * This method's functionality is equivalent to that of {@link Plugin#saveDefaultConfig()},
      *
-     * @param plugin          plugin
-     * @param filePath        the file path
-     * @param printStackTrace if the stack trace should be printed if an error occurs
+     * @param plugin           plugin
+     * @param filePath         the file path
+     * @param exceptionHandler the exception handler
      * @return the new Config
      * @throws IllegalArgumentException if the file path is empty or points to a nonexistent resource
      */
     @Contract("_, _, _ -> new")
-    public static ConfigFile dumbLoad(@NotNull Plugin plugin, @NotNull String filePath, boolean printStackTrace) {
+    public static ConfigFile dumbLoad(@NotNull Plugin plugin, @NotNull String filePath,
+                                      Consumer<Throwable> exceptionHandler) {
         File file = new File(plugin.getDataFolder(), filePath);
 
         if (file.exists()) {
             try {
                 return loadConfig(file);
             } catch (IOException | InvalidConfigurationException exception) {
-                if (printStackTrace) {
-                    exception.printStackTrace();
-                }
+                exceptionHandler.accept(exception);
             }
         } else {
             plugin.saveResource(filePath, false);
