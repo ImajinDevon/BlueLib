@@ -1,6 +1,6 @@
 package com.github.imajindevon.bluelib.config.reflection;
 
-import com.github.imajindevon.bluelib.util.naming.KebabCaseConverter;
+import com.github.imajindevon.bluelib.util.naming.LowerKebabCaseConverter;
 import com.github.imajindevon.bluelib.util.naming.NamingConventionConverter;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +20,6 @@ public interface ReflectiveConfig {
      */
     @NotNull
     default NamingConventionConverter getNamingConventionConverter() {
-        return KebabCaseConverter.INSTANCE;
+        return LowerKebabCaseConverter.INSTANCE;
     }
 }

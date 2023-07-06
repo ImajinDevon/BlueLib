@@ -1,6 +1,5 @@
 package com.github.imajindevon.bluelib.config.reflection;
 
-import com.github.imajindevon.bluelib.annotation.Unsafe;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,21 +15,16 @@ public final class ReflectiveConfigWriter {
      * @param instance the instance to retrieve the fields from
      * @param copyTo   the configuration section to copy the values to
      * @param <T>      the type of the instance
+     *
      * @throws IllegalAccessException if an unauthorized access is attempted
      * @since 1.0.0
      */
-    @Unsafe(
-        {
-            "This method performs reflective operations on the given instance, and unintended behavior may occur.",
-            "for example, if the field does not declare the correct annotations.",
-            "If a SecurityManager is in effect, this is likely to error."
-        }
-    )
     public static <T extends ReflectiveConfig> void copyFields(
         @NotNull T instance,
         @NotNull ConfigurationSection copyTo
     )
-    throws IllegalAccessException {
+    throws IllegalAccessException
+    {
         Class<?> clazz = instance.getClass();
         Class<?>[] typesToIgnore = ReflectiveConfigUtils.getIgnoredTypes(clazz);
 

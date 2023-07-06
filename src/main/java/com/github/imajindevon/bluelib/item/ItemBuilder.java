@@ -1,34 +1,31 @@
 package com.github.imajindevon.bluelib.item;
 
-import com.github.imajindevon.bluelib.chat.ChatUtil;
-import com.github.imajindevon.bluelib.chat.annotation.FutureColored;
-import com.github.imajindevon.bluelib.item.pdc.PdcEntry;
-import com.github.imajindevon.bluelib.item.pdc.PdcUtil;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.util.Consumer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
+/**
+ * A builder class for creating {@link ItemStack}.
+ */
+@SuppressWarnings("UnusedReturnValue")
 public class ItemBuilder {
-    private Set<Consumer<ItemMeta>> metaConsumers = null;
-
-    private @Nullable String displayName = null;
-    private @Nullable List<String> lore = null;
-    private @Nullable Map<Enchantment, Integer> enchantments = null;
-    private @Nullable Set<PdcEntry<?, ?>> pdcEntries;
-
-    private Material material;
-
     private int amount = 1;
-    private @Nullable Integer customModelData = null;
+    private @Nullable Integer customModelData;
+    private @Nullable String displayName;
+    private @Nullable Map<Enchantment, Integer> enchantments;
+    private @Nullable Set<ItemFlag> itemFlags;
+    private @Nullable List<String> lore;
+    private Material material;
 
     /**
      * Creates a new ItemBuilder with the given material.
@@ -40,175 +37,37 @@ public class ItemBuilder {
     }
 
     /**
-     * Copies an {@link ItemStack} into this builder.
-     * This does copies everything but the NBT data (persistent data is considered NBT data).
+     * Add an enchantment to this item.
      *
-     * @param item the item
+     * @param enchantment the enchantment
+     * @param level       the enchantment level
+     *
      * @return this
+     *
+     * @see #addEnchantments(Map)
      */
-    @Contract("_ -> new")
-    public static ItemBuilder safeCopy(@NotNull ItemStack item) {
-        ItemBuilder builder = new ItemBuilder(item.getType());
-
-        builder.addEnchantments(item.getEnchantments())
-               .setAmount(item.getAmount());
-
-        if (item.getItemMeta() == null) {
-            return builder;
+    @Contract("_, _ -> this")
+    public ItemBuilder addEnchantment(@NotNull Enchantment enchantment, int level) {
+        if (this.enchantments == null) {
+            this.enchantments = new HashMap<>(7);
         }
-
-        ItemMeta meta = item.getItemMeta();
-
-        if (meta.hasCustomModelData()) {
-            builder.setCustomModelData(meta.getCustomModelData());
-        }
-        return builder.setDisplayName(meta.getDisplayName())
-                      .setLore(meta.getLore());
-    }
-
-    /**
-     * Return a new ItemBuilder with the given item's {@link Material}.
-     *
-     * @param item the item
-     * @return the new item builder
-     */
-    @Contract("_ -> new")
-    public static ItemBuilder useMaterial(@NotNull ItemStack item) {
-        return new ItemBuilder(item.getType());
-    }
-
-    /**
-     * Set the display name of the item.
-     *
-     * @param displayName the display name of the item
-     * @return this
-     */
-    @Contract("_ -> this")
-    public ItemBuilder setDisplayName(@Nullable String displayName) {
-        this.displayName = displayName;
+        this.enchantments.put(enchantment, level);
         return this;
     }
 
     /**
-     * Set the lore of the item.
-     * To remove the lore, use {@link #removeLore}.
+     * Add a map of enchantments to this item.
      *
-     * @param lore the lore of the item, or null to remove it
+     * @param enchantments the enchantments to add
+     *
      * @return this
+     *
+     * @see #addEnchantment(Enchantment, int)
      */
     @Contract("_ -> this")
-    public ItemBuilder setLore(@Nullable List<@Nullable String> lore) {
-        this.lore = lore;
-        return this;
-    }
-
-    /**
-     * Add a map of enchantments to the item.
-     * If {@code enchantments} is null, no enchantments will be added.
-     *
-     * @param enchantments the enchantments to add, or null
-     * @return this
-     */
-    @Contract("_ -> this")
-    public ItemBuilder addEnchantments(@Nullable Map<Enchantment, Integer> enchantments) {
-        if (enchantments == null) {
-            return this;
-        }
-        this.enchantments = enchantments;
-        return this;
-    }
-
-    /**
-     * Set the amount of the item.
-     *
-     * @param amount the new amount
-     * @return this
-     */
-    @Contract("_ -> this")
-    public ItemBuilder setAmount(int amount) {
-        this.amount = amount;
-        return this;
-    }
-
-    /**
-     * Tag this item by adding byte with a value of 1.
-     * This same effect can be achieved through the {@link PdcUtil#tag} method.
-     *
-     * @param key the key of the persistent data
-     * @return this
-     */
-    @Contract("_ -> this")
-    public ItemBuilder tag(@NotNull NamespacedKey key) {
-        if (this.pdcEntries == null) {
-            this.pdcEntries = new HashSet<>(1);
-        }
-        this.pdcEntries.add(new PdcEntry<>(key, PersistentDataType.BYTE, (byte) 1));
-        return this;
-    }
-
-    /**
-     * Set the lore of the item, while translating the provided list.
-     * To remove the lore, instead of passing null into this method, use {@link #removeLore} to be more specific.
-     *
-     * @param lore the lore of the item, or null to remove it
-     * @return this
-     * @see ChatUtil#translateAllNullable
-     */
-    @Contract("_ -> this")
-    public ItemBuilder setTranslatedLore(@Nullable List<@Nullable @FutureColored String> lore) {
-        this.lore = ChatUtil.translateAllNullable(lore);
-        return this;
-    }
-
-    /**
-     * Set the custom model data of this item.
-     * To explicitly remove the custom model data, use {@link #removeCustomModelData()}.
-     *
-     * @param customModelData the custom model data, or null to remove it
-     * @return this
-     */
-    @Contract("_ -> this")
-    public ItemBuilder setCustomModelData(@Nullable Integer customModelData) {
-        this.customModelData = customModelData;
-        return this;
-    }
-
-    /**
-     * Remove the custom model data from this item.
-     *
-     * @return this
-     */
-    @Contract("-> this")
-    public ItemBuilder removeCustomModelData() {
-        this.customModelData = null;
-        return this;
-    }
-
-    /**
-     * Set the display name of the item.
-     * The display name will be translated.
-     *
-     * @param displayName the display name of the item, or null
-     * @return this
-     * @see ChatUtil#translate
-     */
-    @Contract("_ -> this")
-    public ItemBuilder setTranslatedDisplayName(@Nullable @FutureColored String displayName) {
-        this.displayName = ChatUtil.translate(displayName);
-        return this;
-    }
-
-    /**
-     * Extends the lore of the item with the given lines.
-     * The strings contained in {@code lore}, if null, will be represented as blank lines.
-     *
-     * @param lore the lines to add
-     * @return this
-     */
-    @Contract("_ -> this")
-    public ItemBuilder extendLore(@Nullable String @NotNull ... lore) {
-        for (String line : lore) {
-            this.addLore(line);
+    public ItemBuilder addEnchantments(@NotNull Map<Enchantment, Integer> enchantments) {
+        for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
+            this.addEnchantment(entry.getKey(), entry.getValue());
         }
         return this;
     }
@@ -217,58 +76,25 @@ public class ItemBuilder {
      * Add a line of lore to the item.
      *
      * @param lore the new line, or null for a blank line
+     *
      * @return this
      */
     @Contract("_ -> this")
     public ItemBuilder addLore(@Nullable String lore) {
         if (this.lore == null) {
-            this.lore = new ArrayList<>(3);
+            this.lore = new ArrayList<>(10);
         }
-        this.lore.add(lore);
+        this.lore.add(lore == null ? "" : lore);
         return this;
     }
 
     /**
-     * Set the lore of the item.
+     * Get this item's amount
      *
-     * @param lore the new lore, or null to remove it
-     * @return this
+     * @return the amount
      */
-    @Contract("_ -> this")
-    public ItemBuilder setLore(@Nullable String @Nullable ... lore) {
-        if (lore == null) {
-            return this.removeLore();
-        }
-        this.lore = new ArrayList<>(Arrays.asList(lore));
-        return this;
-    }
-
-    /**
-     * Remove the lore of the item.
-     *
-     * @return this
-     */
-    @Contract("-> this")
-    public ItemBuilder removeLore() {
-        this.lore = null;
-        return this;
-    }
-
-    /**
-     * Set the lore of the item.
-     * The strings contained in {@code lore}, if null, will be represented as blank lines.
-     * The strings will be translated.
-     *
-     * @param lore the new lore, or null to remove the lore
-     * @return this
-     */
-    @Contract("_ -> this")
-    public ItemBuilder setLoreTranslated(@Nullable @FutureColored String @Nullable ... lore) {
-        if (lore == null) {
-            return this.removeLore();
-        }
-        this.lore = Arrays.asList(ChatUtil.translateArray(lore));
-        return this;
+    public int amount() {
+        return this.amount;
     }
 
     /**
@@ -283,7 +109,7 @@ public class ItemBuilder {
 
         if (meta == null) {
             if (this.usesItemMeta()) {
-                throw new UnsupportedOperationException("ItemStack's without an ItemMeta cannot have a display name");
+                throw new IllegalArgumentException("Material " + this.material.name() + " does not support ItemMeta.");
             }
             return item;
         }
@@ -294,113 +120,55 @@ public class ItemBuilder {
 
         meta.setDisplayName(this.displayName);
         meta.setCustomModelData(this.customModelData);
-
-        if (this.lore != null) {
-            meta.setLore(this.lore);
-        }
-        if (this.pdcEntries != null) {
-            for (PdcEntry<?, ?> entry : this.pdcEntries) {
-                PersistentDataType<Object, Object> type = (PersistentDataType<Object, Object>) entry.getType();
-                meta.getPersistentDataContainer().set(entry.getKey(), type, entry.getValue());
-            }
-        }
-
-        // ItemMeta finalization - allow hooks (meta consumers).
-        if (this.metaConsumers != null) {
-            for (Consumer<ItemMeta> metaConsumer : this.metaConsumers) {
-                metaConsumer.accept(meta);
-            }
-        }
+        meta.setLore(this.lore);
         item.setItemMeta(meta);
         return item;
     }
 
     /**
-     * @return if this ItemBuilder's result will use {@link ItemMeta}
+     * Get this item's custom model data.
+     *
+     * @return the custom model data
      */
-    @SuppressWarnings("MethodWithMoreThanThreeNegations")
-    private boolean usesItemMeta() {
-        return this.customModelData != null || !(this.displayName == null || this.lore == null)
-                   || (this.pdcEntries != null && !this.pdcEntries.isEmpty());
+    @Nullable
+    public Integer customModelData() {
+        return this.customModelData;
     }
 
     /**
-     * Clear all enchantments from the item.
+     * Get the display name of this item.
      *
-     * @return this
+     * @return the display name
      */
-    @Contract("-> this")
-    public ItemBuilder clearEnchantments() {
-        this.enchantments = null;
-        return this;
+    @Nullable
+    public String displayName() {
+        return this.displayName;
     }
 
     /**
-     * Get the material of the item.
+     * Extends the lore of the item with the given lines. The strings contained in {@code lore}, if null, will be
+     * represented as blank lines.
      *
-     * @return the material
-     */
-    @NotNull
-    public Material getMaterial() {
-        return this.material;
-    }
-
-    /**
-     * Set the material of the future item.
+     * @param lore the lines to add
      *
-     * @param material the material
      * @return this
      */
     @Contract("_ -> this")
-    public ItemBuilder setMaterial(@NotNull Material material) {
-        this.material = material;
-        return this;
-    }
-
-    /**
-     * Apply persistent data to the item.
-     *
-     * @param key  the key of this data
-     * @param type the type of the data
-     * @param data data
-     * @param <T>  the primitive that the data is serialized into
-     * @param <Z>  the representation of the data
-     * @return this
-     */
-    @Contract("_, _, _ -> this")
-    public <T, Z> ItemBuilder applyPersistentData(
-        @NotNull NamespacedKey key,
-        @NotNull PersistentDataType<T, Z> type,
-        @NotNull Z data
-    ) {
-        if (this.pdcEntries == null) {
-            this.pdcEntries = new HashSet<>(1);
+    public ItemBuilder extendLore(@Nullable String @NotNull ... lore) {
+        if (this.lore == null) {
+            this.lore = new ArrayList<>(Arrays.asList(lore));
+        } else {
+            this.lore.addAll(Arrays.asList(lore));
         }
-        this.pdcEntries.add(new PdcEntry<>(key, type, data));
         return this;
     }
 
     /**
-     * Clear all properties of the item.
-     * The material will be retained.
+     * Increment the amount of the item by one.
      *
      * @return this
-     */
-    @Contract("-> this")
-    public ItemBuilder clear() {
-        this.displayName = null;
-        this.lore = null;
-        this.enchantments = null;
-        this.pdcEntries = null;
-        this.amount = 0;
-        this.customModelData = -1;
-        return this;
-    }
-
-    /**
-     * Increment the amount of the item by 1.
      *
-     * @return this
+     * @see #incrementAmount(int)
      */
     @Contract("-> this")
     public ItemBuilder incrementAmount() {
@@ -412,7 +180,10 @@ public class ItemBuilder {
      * Increment the amount of the item by the specified amount.
      *
      * @param incrementBy the amount to increment
+     *
      * @return this
+     *
+     * @see #incrementAmount()
      */
     @Contract("_ -> this")
     public ItemBuilder incrementAmount(int incrementBy) {
@@ -421,15 +192,154 @@ public class ItemBuilder {
     }
 
     /**
-     * Add an {@link ItemMeta} consumer to this ItemBuilder.
-     * This consumer will be applied with the item's ItemMeta **before** it is applied to the item.
+     * Get an unmodifiable copy of this item's flags.
      *
-     * @param metaConsumer the meta consumer
+     * @return the item flags
      */
-    protected void addMetaConsumer(@NotNull Consumer<ItemMeta> metaConsumer) {
-        if (this.metaConsumers == null) {
-            this.metaConsumers = new HashSet<>(1);
+    @NotNull
+    @Unmodifiable
+    public Set<ItemFlag> itemFlags() {
+        return this.itemFlags == null ? Collections.emptySet() : ImmutableSet.copyOf(this.itemFlags);
+    }
+
+    /**
+     * Get an immutable copy of this item's lore. If this item's lore is {@code null}, an empty immutable list is
+     * returned.
+     *
+     * @return the lore
+     *
+     * @see ImmutableList
+     */
+    @NotNull
+    @Unmodifiable
+    public List<String> lore() {
+        return this.lore == null ? Collections.emptyList() : ImmutableList.copyOf(this.lore);
+    }
+
+    /**
+     * Get this item's material.
+     *
+     * @return the material
+     */
+    @NotNull
+    public Material material() {
+        return this.material;
+    }
+
+    /**
+     * Set the amount of the item.
+     *
+     * @param amount the new amount
+     *
+     * @return this
+     */
+    @Contract("_ -> this")
+    public ItemBuilder setAmount(int amount) {
+        this.amount = amount;
+        return this;
+    }
+
+    /**
+     * Set the custom model data of this item.
+     *
+     * @param customModelData the custom model data, or null to remove it
+     *
+     * @return this
+     */
+    @Contract("_ -> this")
+    public ItemBuilder setCustomModelData(@Nullable Integer customModelData) {
+        this.customModelData = customModelData;
+        return this;
+    }
+
+    /**
+     * Set the display name of the item.
+     *
+     * @param displayName the display name of the item
+     *
+     * @return this
+     */
+    @Contract("_ -> this")
+    public ItemBuilder setDisplayName(@Nullable String displayName) {
+        this.displayName = displayName;
+        return this;
+    }
+
+    /**
+     * Set this item's flags.
+     *
+     * @param itemFlags the item flags
+     *
+     * @return this
+     */
+    @Contract("_ -> this")
+    public ItemBuilder setItemFlags(@NotNull ItemFlag @NotNull ... itemFlags) {
+        this.itemFlags = Set.of(itemFlags);
+        return this;
+    }
+
+    /**
+     * Set the lore of the item.
+     *
+     * @param lore the new lore, or null to remove it
+     *
+     * @return this
+     */
+    @Contract("_ -> this")
+    public ItemBuilder setLore(@Nullable List<String> lore) {
+        this.lore = lore;
+        return this;
+    }
+
+    /**
+     * Set the material of the future item.
+     *
+     * @param material the material
+     *
+     * @return this
+     */
+    @Contract("_ -> this")
+    public ItemBuilder setMaterial(@NotNull Material material) {
+        this.material = material;
+        return this;
+    }
+
+    /**
+     * Get if this item uses item meta.
+     *
+     * @return if this ItemBuilder's result will use {@link ItemMeta}
+     */
+    public boolean usesItemMeta() {
+        return this.customModelData != null
+            || this.displayName != null
+            || !(this.itemFlags == null || this.itemFlags.isEmpty())
+            || !(this.lore == null || this.lore.isEmpty());
+    }
+
+    /**
+     * Copies an {@link ItemStack} into a new builder. Item material, amount, display name, lore, enchantments, and
+     * custom model data is copied.
+     *
+     * @param item the item
+     *
+     * @return this
+     */
+    @Contract("_ -> new")
+    public static ItemBuilder safeCopy(@NotNull ItemStack item) {
+        ItemBuilder builder = new ItemBuilder(item.getType())
+            .addEnchantments(item.getEnchantments())
+            .setAmount(item.getAmount());
+
+        if (item.getItemMeta() == null) return builder;
+
+        ItemMeta meta = item.getItemMeta();
+
+        if (meta.hasCustomModelData()) {
+            builder.setCustomModelData(meta.getCustomModelData());
         }
-        this.metaConsumers.add(metaConsumer);
+        return builder
+            .setDisplayName(meta.getDisplayName())
+            .setLore(meta.getLore())
+            .setItemFlags(meta.getItemFlags().toArray(ItemFlag[]::new));
     }
 }

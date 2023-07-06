@@ -8,9 +8,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation declaring the path up until this field.
- * (e.g) if this field is "a.b.c", the SuperPath would be "a.b".
- * When combined with the {@link QualifiedPath} annotation, {@link IllegalArgumentException} is thrown.
+ * Annotation declaring the path up until this field. (e.g) if this field is "a.b.c", the SuperPath would be "a.b". When
+ * combined with the {@link QualifiedPath} annotation, {@link IllegalArgumentException} is thrown.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

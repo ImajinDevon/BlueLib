@@ -6,9 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks that the provided {@link String} (if not-null) was {@link net.md_5.bungee.api.ChatColor} translated.
+ * Marks that the provided {@link String} was color code translated.
  */
 @Retention(RetentionPolicy.SOURCE)
-@Target({ ElementType.TYPE_USE, ElementType.METHOD, ElementType.PARAMETER, ElementType.FIELD })
+@Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER, ElementType.TYPE_USE})
 public @interface Colored {
 }

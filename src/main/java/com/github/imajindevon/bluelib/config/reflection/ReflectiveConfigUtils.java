@@ -1,6 +1,5 @@
 package com.github.imajindevon.bluelib.config.reflection;
 
-import com.github.imajindevon.bluelib.annotation.Unsafe;
 import com.github.imajindevon.bluelib.config.reflection.annotation.IgnoreField;
 import com.github.imajindevon.bluelib.config.reflection.annotation.IgnoreTypes;
 import com.github.imajindevon.bluelib.config.reflection.annotation.QualifiedPath;
@@ -16,17 +15,7 @@ final class ReflectiveConfigUtils {
     private ReflectiveConfigUtils() {
     }
 
-    @Unsafe("Uses reflection.")
-    static <T> @NotNull Class<?> @NotNull [] getIgnoredTypes(@NotNull Class<T> clazz) {
-        IgnoreTypes ignoreAnnotation = clazz.getAnnotation(IgnoreTypes.class);
-
-        return ignoreAnnotation == null
-                   ? EMPTY_CLASS_ARRAY
-                   : ignoreAnnotation.value();
-    }
-
     @NotNull
-    @Unsafe("Uses reflection.")
     static <T extends ReflectiveConfig> String extractQualifiedPath(@NotNull T config, @NotNull Field field) {
         String fieldName = field.getName();
 
@@ -39,7 +28,7 @@ final class ReflectiveConfigUtils {
         if (superPath != null) {
             if (qualifiedPath != null) {
                 throw new IllegalArgumentException("Field " + fieldName + " cannot declare both @SuperPath and " +
-                                                       "@QualifiedPath");
+                    "@QualifiedPath");
             }
             return superPath.value() + '.' + key;
         }
@@ -49,7 +38,14 @@ final class ReflectiveConfigUtils {
         return qualifiedPath.value();
     }
 
-    @Unsafe("Uses reflection.")
+    static <T> @NotNull Class<?> @NotNull [] getIgnoredTypes(@NotNull Class<T> clazz) {
+        IgnoreTypes ignoreAnnotation = clazz.getAnnotation(IgnoreTypes.class);
+
+        return ignoreAnnotation == null
+            ? EMPTY_CLASS_ARRAY
+            : ignoreAnnotation.value();
+    }
+
     static boolean shouldIgnoreField(@NotNull Field field, @NotNull Class<?> @NotNull [] ignoreTypes) {
         if (field.isAnnotationPresent(IgnoreField.class)) {
             return true;

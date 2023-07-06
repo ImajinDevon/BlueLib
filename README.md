@@ -21,7 +21,7 @@ repositories {
 shadowJar {
     include {
         dependencies {
-            include('com.github.imajindevon:BlueLib:1.0.0')
+            include('com.github.imajindevon:BlueLib:1.1.0')
         }
     }
 }
@@ -36,7 +36,7 @@ dependencies {
 <repositories>
     <repository>
         <id>jitpack.io</id>
-        <url>https://jitpack.io/</id>
+        <url>https://jitpack.io/</url>
     </repository>
 </repositories>
 
@@ -44,7 +44,7 @@ dependencies {
     <dependency>
         <artifactId>BlueLib</artifactId>
         <groupId>com.github.ImajinDevon</groupId>
-        <version>main</version>
+        <version>1.1.0</version>
         <scope>compile</scope>
     </dependency>
 </dependencies>
